@@ -29,7 +29,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.function.Consumer;
 import java.util.function.Function;
 
 import static java.lang.String.format;
@@ -46,37 +45,6 @@ public class Server {
     public Server(String host, int port) {
         this(host, port, DefaultClientListener.class);
     }
-
-//    @SuppressWarnings("unchecked")
-//    public Server(String host, int port, Class clientListenerClass) {
-//
-//        if (clientListenerClass.getGenericSuperclass() == null
-//                || !clientListenerClass.getGenericSuperclass().equals(AbstractClientListener.class)) {
-//            throw new IllegalArgumentException("Wrong client listener of type: "+clientListenerClass.getName());
-//        }
-//
-//        executor.execute(() -> {
-//            try (final ServerSocket server = new ServerSocket(port, 0, InetAddress.getByName(host))) {
-//
-//                socket = server;
-//
-//                while (!server.isClosed()) {
-//                    final Socket client = server.accept();
-//                    final Constructor<AbstractClientListener> constructor = clientListenerClass.getDeclaredConstructor(Socket.class);
-//                    constructor.setAccessible(true);
-//                    final AbstractClientListener clientListener = constructor.newInstance(client);
-//                    executor.execute(clientListener);
-//                    clients.add(clientListener);
-//                }
-//
-//            } catch (IOException e) {
-//                log.error(format("Error while conversation with %s:%d", host, port), e);
-//            } catch (Exception e) {
-//                log.error(format("Unable to instantiate %s", clientListenerClass.getName()), e);
-//            }
-//        });
-//
-//    }
 
     @SuppressWarnings("unchecked")
     public Server(String host, int port, Class clientListenerClass) {
