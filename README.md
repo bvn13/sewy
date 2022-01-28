@@ -24,7 +24,7 @@ new Server("192.168.0.153", port, EchoClientListener.class);
 
 ```
 
-3. Create client to communicate with server
+3. Create Client to communicate with server
 
 ```java
 Client<SimpleClientListener> client = new Client<>("192.168.0.153", port, SimpleClientListener.class);
