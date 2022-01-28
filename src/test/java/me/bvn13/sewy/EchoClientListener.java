@@ -9,6 +9,8 @@ public class EchoClientListener extends AbstractClientListener {
 
     @Override
     public void run() {
-        writeLine(readLine());
+        while (socket.isConnected()) {
+            writeLine(readLine());
+        }
     }
 }

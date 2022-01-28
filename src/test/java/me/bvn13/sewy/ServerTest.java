@@ -57,8 +57,11 @@ public class ServerTest {
         new Server("localhost", port, EchoClientListener.class);
         Client client = new Client("localhost", port);
         client.writeLine("hello");
-        String response = client.readLine();
-        Assertions.assertEquals("hello", response);
+        String response1 = client.readLine();
+        Assertions.assertEquals("hello", response1);
+        client.writeLine("olleh");
+        String response2 = client.readLine();
+        Assertions.assertEquals("olleh", response2);
     }
 
 }
