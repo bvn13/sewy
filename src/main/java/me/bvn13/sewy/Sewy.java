@@ -1,5 +1,5 @@
 /*
-   Copyright 2020 Vyacheslav Boyko
+   Copyright 2022 Vyacheslav Boyko
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -15,23 +15,56 @@
  */
 package me.bvn13.sewy;
 
-import java.io.Serializable;
+import me.bvn13.sewy.command.AbstractCommand;
+
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.locks.ReentrantLock;
 
+/**
+ * Supporting class providing protocol restrictions
+ */
 public final class Sewy {
+
+    static final byte SEPARATOR = '\n';
 
     private static Sewy INSTANCE;
     private static final ReentrantLock LOCK = new ReentrantLock();
 
-    private final List<Serializable> registeredDataTypes = new CopyOnWriteArrayList<>();
+    private final List<Class<?>> registeredDataTypes = new CopyOnWriteArrayList<>();
 
-    public static void register(Serializable clazz) {
+    /**
+     * Registers command in white list for further communications
+     * @param clazz command class
+     * @param <T> generic type
+     */
+    public static <T extends AbstractCommand> void register(Class<T> clazz) {
         getInstance().registeredDataTypes.add(clazz);
     }
 
-    private Sewy() {}
+    /**
+     * Registers commands in white list for further communications
+     * @param classes array of command classes
+     * @param <T> generic type
+     */
+    public static <T extends AbstractCommand> void register(Class<T>[] classes) {
+        for (Class<T> clazz: classes) {
+            register(clazz);
+        }
+    }
+
+    private Sewy() {
+    }
+
+    @SuppressWarnings("unchecked")
+    static List<Class<AbstractCommand>> getRegisteredDataTypes() {
+        final List<Class<AbstractCommand>> dataTypes = new ArrayList<>();
+        for (Class<?> registeredDataType : INSTANCE.registeredDataTypes) {
+            dataTypes.add((Class<AbstractCommand>) registeredDataType);
+        }
+        return dataTypes;
+    }
 
     private static Sewy getInstance() {
         try {

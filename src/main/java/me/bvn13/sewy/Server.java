@@ -1,5 +1,5 @@
 /*
-   Copyright 2020 Vyacheslav Boyko
+   Copyright 2022 Vyacheslav Boyko
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.lang.reflect.Constructor;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -32,28 +31,47 @@ import java.util.concurrent.Executors;
 import java.util.function.Function;
 
 import static java.lang.String.format;
+import static me.bvn13.sewy.ClientListenerFactory.createClientListenerConstructor;
 
+/**
+ * TCP Server.
+ * Create the instance of this class to connect to {@link Client}
+ */
 public class Server {
 
-    private static final Logger log = LoggerFactory.getLogger(Server.class);
+    private final Logger log = LoggerFactory.getLogger(this.getClass());
 
     private final ExecutorService executor = Executors.newCachedThreadPool();
-    final List<AbstractClientListener> clients = Collections.synchronizedList(new ArrayList<>());
+    private final List<AbstractClientListener> clients = Collections.synchronizedList(new ArrayList<>());
 
     private ServerSocket socket;
 
+    /**
+     * @param host host to bind in order to start listen to clients
+     * @param port port to start listen to
+     */
     public Server(String host, int port) {
-        this(host, port, DefaultClientListener.class);
+        this(host, port, CommandClientListener.class);
     }
 
-    @SuppressWarnings("unchecked")
+    /**
+     * @param host host to bind in order to start listen to clients
+     * @param port port to start listen to
+     * @param clientListenerClass client listen class to be used for communication
+     */
     public Server(String host, int port, Class clientListenerClass) {
-        this(host, port, defaultClientListenerConstructor(clientListenerClass));
+        this(host, port, createClientListenerConstructor(clientListenerClass));
     }
 
+    /**
+     *
+     * @param host host to bind in order to start listen to clients
+     * @param port port to start listen to
+     * @param clientListenerConstructor to provide constructor for client listener (see {@link me.bvn13.sewy.Server#Server(java.lang.String, int, java.lang.Class)})
+     */
     @SuppressWarnings("unchecked")
-    public Server(String host, int port, Function<Socket, AbstractClientListener> clientListenerConstructor) {
-
+    public Server(String host, int port, Function<Socket, CommandClientListener> clientListenerConstructor) {
+        log.debug("Starting server");
         executor.execute(() -> {
             try (final ServerSocket server = new ServerSocket(port, 0, InetAddress.getByName(host))) {
 
@@ -73,7 +91,12 @@ public class Server {
 
     }
 
+    /**
+     * Stops server gracefully
+     * Disconnects from every client
+     */
     public void stop() {
+        log.debug("Stopping server");
         final Iterator<AbstractClientListener> iterator = clients.iterator();
         while (iterator.hasNext()) {
             final AbstractClientListener client = iterator.next();
@@ -83,28 +106,12 @@ public class Server {
         executor.shutdown();
     }
 
-    boolean isListening() {
+    /**
+     * To check whether the server is ready for new connections
+     * @return
+     */
+    public boolean isListening() {
         return socket != null && socket.isBound();
-    }
-
-    @SuppressWarnings("unchecked")
-    private static Function<Socket, AbstractClientListener> defaultClientListenerConstructor(Class clientListenerClass) {
-
-        if (clientListenerClass.getGenericSuperclass() == null
-                || !clientListenerClass.getGenericSuperclass().equals(AbstractClientListener.class)) {
-            throw new IllegalArgumentException("Wrong client listener of type: "+clientListenerClass.getName());
-        }
-
-        return (client) -> {
-            try {
-                final Constructor<AbstractClientListener> constructor = clientListenerClass.getDeclaredConstructor(Socket.class);
-                constructor.setAccessible(true);
-                return constructor.newInstance(client);
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-        };
-
     }
 
 }

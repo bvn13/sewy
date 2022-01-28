@@ -18,11 +18,11 @@ package me.bvn13.sewy;
 import java.net.Socket;
 
 /**
- * Simple ECHOed client listener
- * Writes into socket all the data received before
+ * Simple client listener is to disable automatic receiving and sending data.
+ * Override {@link SimpleClientListener#run()} to implement business logic of communicating
  */
-public class EchoClientListener extends AbstractClientListener {
-    public EchoClientListener(Socket socket) {
+public class SimpleClientListener extends AbstractClientListener {
+    protected SimpleClientListener(Socket socket) {
         super(socket);
     }
 
@@ -31,10 +31,6 @@ public class EchoClientListener extends AbstractClientListener {
      */
     @Override
     public void run() {
-        while (socket.isConnected()) {
-            Thread.yield();
-            final String data = readLine();
-            writeLine(data);
-        }
+
     }
 }

@@ -1,8 +1,28 @@
+/*
+   Copyright 2022 Vyacheslav Boyko
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+ */
 package me.bvn13.sewy;
 
+import me.bvn13.sewy.command.AbstractCommand;
+import me.bvn13.sewy.command.PingCommand;
+import me.bvn13.sewy.command.PongCommand;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+
+import java.util.concurrent.atomic.AtomicLong;
 
 public class ServerTest {
 
@@ -21,7 +41,7 @@ public class ServerTest {
     @ValueSource(ints = START_PORT + 2)
     void givenServerRunning_whenClientConnects_thenServerCanStopClientListener(int port) throws InterruptedException {
         Server server = new Server("localhost", port);
-        Client client = new Client("localhost", port);
+        Client<SimpleClientListener> client = new Client<>("localhost", port, SimpleClientListener.class);
         Thread.sleep(1000);
         Assertions.assertTrue(server.isListening());
         Assertions.assertTrue(client.isConnected());
@@ -39,13 +59,8 @@ public class ServerTest {
 
     @ParameterizedTest
     @ValueSource(ints = START_PORT + 4)
-    void serverStartedWithLambdaProvidedClientListener(int port) throws InterruptedException {
-        Server server = new Server("localhost", port, (socket) -> new AbstractClientListener(socket) {
-            @Override
-            public void run() {
-
-            }
-        });
+    void serverIsAbleToStartWithLambdaProvidedClientListener(int port) throws InterruptedException {
+        Server server = new Server("localhost", port, SimpleClientListener.class);
         Thread.sleep(1000);
         Assertions.assertTrue(server.isListening());
         server.stop();
@@ -54,14 +69,47 @@ public class ServerTest {
     @ParameterizedTest
     @ValueSource(ints = START_PORT + 5)
     void simpleEchoClientServer(int port) {
-        new Server("localhost", port, EchoClientListener.class);
-        Client client = new Client("localhost", port);
+        new Server("192.168.0.153", port, EchoClientListener.class);
+        Client<SimpleClientListener> client = new Client<>("192.168.0.153", port, SimpleClientListener.class);
         client.writeLine("hello");
         String response1 = client.readLine();
         Assertions.assertEquals("hello", response1);
         client.writeLine("olleh");
         String response2 = client.readLine();
         Assertions.assertEquals("olleh", response2);
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = START_PORT + 6)
+    void serverIsAbleToPingPong(int port) throws InterruptedException {
+        Sewy.register(PingCommand.class);
+        Sewy.register(PongCommand.class);
+
+        Server server = new Server("localhost", port, (socket) -> new CommandClientListener(socket) {
+            @Override
+            public AbstractCommand onCommand(AbstractCommand command) {
+                if (command instanceof PingCommand) {
+                    return new PongCommand((PingCommand) command);
+                }
+                throw new IllegalArgumentException(command.toString());
+            }
+        });
+
+        AtomicLong latency = new AtomicLong(0);
+        CommandClient client = new CommandClient("localhost", port, (socket) -> new CommandClientListener(socket) {
+            @Override
+            public AbstractCommand onCommand(AbstractCommand command) {
+                if (command instanceof PongCommand) {
+                    latency.set(((PongCommand)command).getLatency());
+                    return null;
+                } else {
+                    throw new IllegalArgumentException(command.toString());
+                }
+            }
+        });
+        client.send(new PingCommand());
+        Thread.sleep(1000);
+        Assertions.assertTrue(latency.get() > 0);
     }
 
 }

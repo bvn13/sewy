@@ -13,28 +13,13 @@
    See the License for the specific language governing permissions and
    limitations under the License.
  */
-package me.bvn13.sewy;
+package me.bvn13.sewy.command;
 
-import java.net.Socket;
+import java.io.Serializable;
 
 /**
- * Simple ECHOed client listener
- * Writes into socket all the data received before
+ * The very parent class every command should be inherited from
  */
-public class EchoClientListener extends AbstractClientListener {
-    public EchoClientListener(Socket socket) {
-        super(socket);
-    }
+public class AbstractCommand implements Serializable {
 
-    /**
-     * Thread runner
-     */
-    @Override
-    public void run() {
-        while (socket.isConnected()) {
-            Thread.yield();
-            final String data = readLine();
-            writeLine(data);
-        }
-    }
 }
