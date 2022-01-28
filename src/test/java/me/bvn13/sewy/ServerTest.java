@@ -31,7 +31,7 @@ public class ServerTest {
     @ParameterizedTest
     @ValueSource(ints = START_PORT + 1)
     void testServerStarts(int port) throws InterruptedException {
-        Server server = new Server("localhost", port);
+        Server server = new Server("localhost", port, SimpleClientListener.class);
         Thread.sleep(1000);
         Assertions.assertTrue(server.isListening());
         server.stop();
@@ -40,7 +40,7 @@ public class ServerTest {
     @ParameterizedTest
     @ValueSource(ints = START_PORT + 2)
     void givenServerRunning_whenClientConnects_thenServerCanStopClientListener(int port) throws InterruptedException {
-        Server server = new Server("localhost", port);
+        Server server = new Server("localhost", port, SimpleClientListener.class);
         Client<SimpleClientListener> client = new Client<>("localhost", port, SimpleClientListener.class);
         Thread.sleep(1000);
         Assertions.assertTrue(server.isListening());
@@ -85,7 +85,7 @@ public class ServerTest {
         Sewy.register(PingCommand.class);
         Sewy.register(PongCommand.class);
 
-        Server server = new Server("localhost", port, (socket) -> new CommandClientListener(socket) {
+        CommandServer server = new CommandServer("localhost", port, (socket) -> new CommandClientListener(socket) {
             @Override
             public AbstractCommand onCommand(AbstractCommand command) {
                 if (command instanceof PingCommand) {

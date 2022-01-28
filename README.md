@@ -51,7 +51,7 @@ Sewy.register(PongCommand.class);
 3. Start server with `CommandClientListener` implementing response creation logic
 
 ```java
-Server server = new Server("localhost", port, (socket) -> new CommandClientListener(socket) {
+CommandServer server = new CommandServer("localhost", port, (socket) -> new CommandClientListener(socket) {
     @Override
     public AbstractCommand onCommand(AbstractCommand command) {
         if (command instanceof PingCommand) {

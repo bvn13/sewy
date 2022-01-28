@@ -15,6 +15,7 @@
  */
 package me.bvn13.sewy;
 
+import me.bvn13.sewy.command.AbstractCommand;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,18 +36,17 @@ import static me.bvn13.sewy.ClientListenerFactory.createClientListenerConstructo
 
 /**
  * TCP Server.
+ * Works with command protocol.
  * Create the instance of this class to connect to {@link Client}
  */
-public class Server<T extends AbstractClientListener> {
+public class CommandServer extends Server<CommandClientListener> {
 
-    protected final Logger log = LoggerFactory.getLogger(this.getClass());
-
-    protected final ExecutorService executor = Executors.newCachedThreadPool();
-    protected final List<T> clients = Collections.synchronizedList(new ArrayList<>());
-
-    protected ServerSocket socket;
-
-    protected Server() {
+    /**
+     * @param host host to bind in order to start listen to clients
+     * @param port port to start listen to
+     */
+    public CommandServer(String host, int port) {
+        this(host, port, CommandClientListener.class);
     }
 
     /**
@@ -54,7 +54,7 @@ public class Server<T extends AbstractClientListener> {
      * @param port port to start listen to
      * @param clientListenerClass client listen class to be used for communication
      */
-    public Server(String host, int port, Class clientListenerClass) {
+    public CommandServer(String host, int port, Class clientListenerClass) {
         this(host, port, createClientListenerConstructor(clientListenerClass));
     }
 
@@ -62,10 +62,10 @@ public class Server<T extends AbstractClientListener> {
      *
      * @param host host to bind in order to start listen to clients
      * @param port port to start listen to
-     * @param clientListenerConstructor to provide constructor for client listener (see {@link me.bvn13.sewy.Server#Server(java.lang.String, int, java.lang.Class)})
+     * @param clientListenerConstructor to provide constructor for client listener (see {@link CommandServer#CommandServer(String, int, Class)})
      */
     @SuppressWarnings("unchecked")
-    public Server(String host, int port, Function<Socket, T> clientListenerConstructor) {
+    public CommandServer(String host, int port, Function<Socket, CommandClientListener> clientListenerConstructor) {
         log.debug("Starting server");
         executor.execute(() -> {
             try (final ServerSocket server = new ServerSocket(port, 0, InetAddress.getByName(host))) {
@@ -74,7 +74,7 @@ public class Server<T extends AbstractClientListener> {
 
                 while (!server.isClosed()) {
                     final Socket client = server.accept();
-                    final T clientListener = clientListenerConstructor.apply(client);
+                    final CommandClientListener clientListener = clientListenerConstructor.apply(client);
                     executor.execute(clientListener);
                     clients.add(clientListener);
                 }
@@ -83,30 +83,18 @@ public class Server<T extends AbstractClientListener> {
                 log.error(format("Error while conversation with %s:%d", host, port), e);
             }
         });
-
     }
 
     /**
-     * Stops server gracefully
-     * Disconnects from every client
+     * Sends command to every client
+     * @param command command to be sent
+     * @param <T> generic type
      */
-    public void stop() {
-        log.debug("Stopping server");
-        final Iterator<T> iterator = clients.iterator();
-        while (iterator.hasNext()) {
-            final AbstractClientListener client = iterator.next();
-            client.stop();
-            iterator.remove();
+    public <T extends AbstractCommand> void send(T command) {
+        log.debug("Start to send command: " + command);
+        for (CommandClientListener client : clients) {
+            client.send(command);
         }
-        executor.shutdown();
-    }
-
-    /**
-     * To check whether the server is ready for new connections
-     * @return
-     */
-    public boolean isListening() {
-        return socket != null && socket.isBound();
     }
 
 }
