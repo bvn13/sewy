@@ -46,7 +46,13 @@ public class CommandClientListener extends AbstractClientListener implements Abs
             if (line == null || line.length == 0) {
                 continue;
             }
-            final Object command = SerializationUtils.deserialize(line);
+            final Object command;
+            try {
+                command = SerializationUtils.deserialize(line);
+            } catch (Exception e) {
+                log.warn("Deserialization exception occurred!", e);
+                continue;
+            }
             if (command == null) {
                 continue;
             }
