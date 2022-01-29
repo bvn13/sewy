@@ -18,12 +18,11 @@ package me.bvn13.sewy;
 import me.bvn13.sewy.command.AbstractCommand;
 import org.apache.commons.lang3.SerializationUtils;
 
-import java.io.IOException;
 import java.io.Serializable;
 import java.net.Socket;
 
 import static java.lang.String.format;
-import static me.bvn13.sewy.Sewy.SEPARATOR;
+import static me.bvn13.sewy.Sewy.getSeparator;
 
 /**
  * Client listener describing protocol-oriented communication
@@ -42,14 +41,14 @@ public class CommandClientListener extends AbstractClientListener implements Abs
         }
         while (socket.isConnected()) {
             Thread.yield();
-            byte[] line = readBytes(SEPARATOR);
+            byte[] line = readBytes(getSeparator());
             if (line == null || line.length == 0) {
                 continue;
             }
             final Object command;
             try {
                 command = SerializationUtils.deserialize(line);
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 log.warn("Deserialization exception occurred!", e);
                 continue;
             }
@@ -67,12 +66,7 @@ public class CommandClientListener extends AbstractClientListener implements Abs
             }
             final Serializable response = onCommand((AbstractCommand) command);
             log.debug(format("Response for %s is: %s", command, response));
-            try {
-                out.write(SerializationUtils.serialize(response));
-                out.write(SEPARATOR);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
+            writeBytes(SerializationUtils.serialize(response), getSeparator());
         }
     }
 
@@ -96,13 +90,7 @@ public class CommandClientListener extends AbstractClientListener implements Abs
      */
     public <T extends AbstractCommand> void send(T command) {
         log.debug("Start to send command: " + command);
-        try {
-            out.write(SerializationUtils.serialize(command));
-            out.write(SEPARATOR);
-            out.flush();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        writeBytes(SerializationUtils.serialize(command), getSeparator());
     }
 
 }

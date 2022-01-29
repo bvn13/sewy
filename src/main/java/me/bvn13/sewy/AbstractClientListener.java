@@ -25,7 +25,7 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 
-import static me.bvn13.sewy.Sewy.SEPARATOR;
+import static me.bvn13.sewy.Sewy.getSeparator;
 
 /**
  * TCP Client listener.
@@ -66,7 +66,7 @@ public abstract class AbstractClientListener implements Runnable {
      * @return the line read from socket
      */
     public String readLine() {
-        final byte[] bytes = readBytes(SEPARATOR);
+        final byte[] bytes = readBytes(getSeparator());
         final StringBuilder sb = new StringBuilder();
         for (byte aByte : bytes) {
             sb.append((char) aByte);
@@ -106,17 +106,28 @@ public abstract class AbstractClientListener implements Runnable {
     /**
      * Writes line into socket ending with default separator '\n'.
      * Flushes after writing.
-     * @param data data to be sent into socket
+     * @param bytes bytes to be sent into socket
+     * @param separator byte to separate data portions
      */
-    public void writeLine(String data) {
-        if (log.isTraceEnabled()) log.trace("Sending: " + data);
+    public void writeBytes(byte[] bytes, byte separator) {
+        if (log.isTraceEnabled()) log.trace("Sending: " + new String(bytes));
         try {
-            out.write(data.getBytes());
-            out.write(SEPARATOR);
+            out.write(bytes);
+            out.write(separator);
             out.flush();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    /**
+     * Writes line into socket ending with default separator '\n'.
+     * Flushes after writing.
+     * @param data data to be sent into socket
+     */
+    public void writeLine(String data) {
+        if (log.isTraceEnabled()) log.trace("Sending: " + data);
+        writeBytes(data.getBytes(), getSeparator());
     }
 
     /**
