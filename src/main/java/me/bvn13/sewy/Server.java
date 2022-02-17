@@ -98,6 +98,11 @@ public class Server<T extends AbstractClientListener> {
             client.stop();
             iterator.remove();
         }
+        try {
+            socket.close();
+        } catch (IOException e) {
+            log.error("Failed to close socket");
+        }
         executor.shutdown();
     }
 

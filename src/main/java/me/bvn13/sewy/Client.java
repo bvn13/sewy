@@ -90,6 +90,11 @@ public class Client<T extends AbstractClientListener> {
     public void stop() {
         log.debug("Stopping client");
         client.stop();
+        try {
+            socket.close();
+        } catch (IOException e) {
+            log.error("Failed to close socket");
+        }
         executor.shutdown();
     }
 
