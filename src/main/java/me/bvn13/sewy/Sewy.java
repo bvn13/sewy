@@ -33,7 +33,7 @@ public final class Sewy {
     private static final ReentrantLock LOCK = new ReentrantLock();
 
     private final List<Class<?>> registeredDataTypes = new CopyOnWriteArrayList<>();
-    private byte separator = SEPARATOR;
+    private byte[] separator = new byte[] { SEPARATOR };
 
     /**
      * Registers command in white list for further communications
@@ -55,11 +55,11 @@ public final class Sewy {
         }
     }
 
-    public static byte getSeparator() {
+    public static byte[] getSeparator() {
         return getInstance().separator;
     }
 
-    public static void setSeparator(byte separator) {
+    public static void setSeparator(byte[] separator) {
         try {
             LOCK.lock();
             getInstance().separator = separator;

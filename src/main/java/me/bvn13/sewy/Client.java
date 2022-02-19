@@ -89,9 +89,13 @@ public class Client<T extends AbstractClientListener> {
      */
     public void stop() {
         log.debug("Stopping client");
-        client.stop();
+        if (client != null) {
+            client.stop();
+        }
         try {
-            socket.close();
+            if (socket != null) {
+                socket.close();
+            }
         } catch (IOException e) {
             log.error("Failed to close socket");
         }
@@ -119,7 +123,7 @@ public class Client<T extends AbstractClientListener> {
      * @param separator
      * @return
      */
-    public byte[] readBytes(byte separator) {
+    public byte[] readBytes(byte[] separator) {
         return client.readBytes(separator);
     }
 

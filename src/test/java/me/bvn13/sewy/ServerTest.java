@@ -16,6 +16,7 @@
 package me.bvn13.sewy;
 
 import me.bvn13.sewy.command.AbstractCommand;
+import me.bvn13.sewy.command.ComplexCommand;
 import me.bvn13.sewy.command.PingCommand;
 import me.bvn13.sewy.command.PongCommand;
 import org.junit.jupiter.api.Assertions;
@@ -23,6 +24,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class ServerTest {
 
@@ -112,4 +114,43 @@ public class ServerTest {
         Assertions.assertTrue(latency.get() > 0);
     }
 
+    @ParameterizedTest
+    @ValueSource(ints = START_PORT + 7)
+    void wideSeparatorTest(int port) throws InterruptedException {
+        Sewy.register(ComplexCommand.class);
+        Sewy.setSeparator(new byte[] { '\n', 'e', 'n', 'd', '\n' });
+
+        AtomicReference<ComplexCommand> check = new AtomicReference<>();
+
+        CommandServer server = new CommandServer("localhost", port, (socket) -> new CommandClientListener(socket) {
+            @Override
+            public AbstractCommand onCommand(AbstractCommand command) {
+                if (command instanceof ComplexCommand) {
+                    check.set((ComplexCommand) command);
+                    return null;
+                }
+                throw new IllegalArgumentException(command.toString());
+            }
+        });
+
+        CommandClient client = new CommandClient("localhost", port, (socket) -> new CommandClientListener(socket) {
+            @Override
+            public AbstractCommand onCommand(AbstractCommand command) {
+                throw new IllegalArgumentException(command.toString());
+            }
+        });
+
+        ComplexCommand command = new ComplexCommand();
+        command.add(new ComplexCommand.SimpleData("a1"));
+        command.add(new ComplexCommand.SimpleData("b2"));
+        command.add(new ComplexCommand.SimpleData("finish"));
+
+        client.send(command);
+        Thread.sleep(1000);
+        Assertions.assertNotNull(check.get());
+        Assertions.assertEquals(3, check.get().getDatum().size());
+        Assertions.assertEquals("a1", check.get().getDatum().get(0).getString());
+        Assertions.assertEquals("b2", check.get().getDatum().get(1).getString());
+        Assertions.assertEquals("finish", check.get().getDatum().get(2).getString());
+    }
 }

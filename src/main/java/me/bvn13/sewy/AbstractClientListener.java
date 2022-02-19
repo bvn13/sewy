@@ -63,6 +63,7 @@ public abstract class AbstractClientListener implements Runnable {
 
     /**
      * Reads line (separated with '\n') from socket
+     *
      * @return the line read from socket
      */
     public String readLine() {
@@ -78,16 +79,31 @@ public abstract class AbstractClientListener implements Runnable {
 
     /**
      * Reads data from socket until {@code separator} is encountered
+     *
      * @param separator byte to separate data portions
      * @return array of bytes read from socket
      */
-    public byte[] readBytes(byte separator) {
-        final List<Byte> data = new ArrayList<>(256);
+    public byte[] readBytes(byte[] separator) {
+        final List<Byte> data = new ArrayList<>(2048 * 2048);
+        List<Byte> buffer = new ArrayList<>(separator.length);
+        int separatorPosition = 0;
         try {
             while (socket.isConnected()) {
                 byte[] portion = in.readNBytes(1);
-                if (portion == null || portion.length == 0 || portion[0] == separator) {
+                if (portion == null || portion.length == 0) {
                     break;
+                }
+                if (portion[0] == separator[separatorPosition]) {
+                    if (separatorPosition == separator.length - 1) {
+                        break;
+                    }
+                    separatorPosition++;
+                    buffer.add(portion[0]);
+                    continue;
+                } else {
+                    separatorPosition = 0;
+                    data.addAll(buffer);
+                    buffer.clear();
                 }
                 data.add(portion[0]);
             }
@@ -96,7 +112,7 @@ public abstract class AbstractClientListener implements Runnable {
             for (Byte aByte : data) {
                 bytes[i++] = aByte;
             }
-            if (log.isTraceEnabled()) log.trace("Received: " + new String(bytes));
+            if (log.isTraceEnabled()) log.trace("Received {} bytes: {}", bytes.length, bytes);
             return bytes;
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -106,11 +122,12 @@ public abstract class AbstractClientListener implements Runnable {
     /**
      * Writes line into socket ending with default separator '\n'.
      * Flushes after writing.
-     * @param bytes bytes to be sent into socket
+     *
+     * @param bytes     bytes to be sent into socket
      * @param separator byte to separate data portions
      */
-    public void writeBytes(byte[] bytes, byte separator) {
-        if (log.isTraceEnabled()) log.trace("Sending: " + new String(bytes));
+    public void writeBytes(byte[] bytes, byte[] separator) {
+        if (log.isTraceEnabled()) log.trace("Sending {} bytes: {}", bytes.length, bytes);
         try {
             out.write(bytes);
             out.write(separator);
@@ -123,6 +140,7 @@ public abstract class AbstractClientListener implements Runnable {
     /**
      * Writes line into socket ending with default separator '\n'.
      * Flushes after writing.
+     *
      * @param data data to be sent into socket
      */
     public void writeLine(String data) {

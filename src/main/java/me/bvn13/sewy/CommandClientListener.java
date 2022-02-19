@@ -59,7 +59,7 @@ public class CommandClientListener extends AbstractClientListener implements Abs
                 log.error("Unexpected command received");
                 continue;
             }
-            log.debug("Command received: " + command);
+            log.debug("Command received: " + command.getClass());
             if (!(command instanceof AbstractCommand)) {
                 log.warn("Incorrect command received: " + command);
                 continue;

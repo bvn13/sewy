@@ -99,7 +99,9 @@ public class Server<T extends AbstractClientListener> {
             iterator.remove();
         }
         try {
-            socket.close();
+            if (socket != null) {
+                socket.close();
+            }
         } catch (IOException e) {
             log.error("Failed to close socket");
         }
