@@ -5,7 +5,7 @@ plugins {
 }
 
 group 'me.bvn13'
-version '1.2.7'
+version '1.2.8'
 
 repositories {
     mavenCentral()
@@ -53,12 +53,12 @@ publishing {
         gpr(MavenPublication) {
             from(components.java)
         }
-        mavenJava(MavenPublication) {
-            from components.java
-
-            artifact sourceJar {
-                classifier "sources"
-            }
-        }
+//        mavenJava(MavenPublication) {
+//            from components.java
+//
+//            artifact sourceJar {
+//                classifier "sources"
+//            }
+//        }
     }
 }
