@@ -26,16 +26,16 @@ class ClientListenerFactory {
 
     /**
      * Creates client listener constructor
+     *
      * @param clientListenerClass class to be used as client listener
-     * @param <T> generic type
+     * @param <T>                 generic type
      * @return lambda method to create client listener
      */
     @SuppressWarnings("unchecked")
     static <T extends AbstractClientListener> Function<Socket, T> createClientListenerConstructor(Class clientListenerClass) {
 
-        if (clientListenerClass.getGenericSuperclass() == null
-                /*|| !clientListenerClass.getGenericSuperclass().equals(T.class)*/) {
-            throw new IllegalArgumentException("Wrong client listener of type: "+clientListenerClass.getName());
+        if (clientListenerClass.getGenericSuperclass() == null) {
+            throw new IllegalArgumentException("Wrong client listener of type: " + clientListenerClass.getName());
         }
 
         return (client) -> {

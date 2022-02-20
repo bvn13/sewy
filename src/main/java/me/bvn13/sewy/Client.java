@@ -115,7 +115,11 @@ public class Client<T extends AbstractClientListener> {
      * @return the line read from socket
      */
     public String readLine() {
-        return client.readLine();
+        try {
+            return client.readLine();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     /**
@@ -123,7 +127,7 @@ public class Client<T extends AbstractClientListener> {
      * @param separator
      * @return
      */
-    public byte[] readBytes(byte[] separator) {
+    public byte[] readBytes(byte[] separator) throws IOException {
         return client.readBytes(separator);
     }
 

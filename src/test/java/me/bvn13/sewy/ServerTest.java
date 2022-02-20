@@ -83,7 +83,7 @@ public class ServerTest {
 
     @ParameterizedTest
     @ValueSource(ints = START_PORT + 6)
-    void serverIsAbleToPingPong(int port) throws InterruptedException {
+    void serverIsAbleToPingPong(int port) throws Exception {
         Sewy.register(PingCommand.class);
         Sewy.register(PongCommand.class);
 
@@ -116,7 +116,7 @@ public class ServerTest {
 
     @ParameterizedTest
     @ValueSource(ints = START_PORT + 7)
-    void wideSeparatorTest(int port) throws InterruptedException {
+    void wideSeparatorTest(int port) throws Exception {
         Sewy.register(ComplexCommand.class);
         Sewy.setSeparator(new byte[] { '\n', 'e', 'n', 'd', '\n' });
 

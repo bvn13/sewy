@@ -15,6 +15,9 @@
  */
 package me.bvn13.sewy;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.net.Socket;
 
 /**
@@ -22,6 +25,9 @@ import java.net.Socket;
  * Writes into socket all the data received before
  */
 public class EchoClientListener extends AbstractClientListener {
+
+    private final Logger log = LoggerFactory.getLogger(EchoClientListener.class);
+
     public EchoClientListener(Socket socket) {
         super(socket);
     }
@@ -33,8 +39,12 @@ public class EchoClientListener extends AbstractClientListener {
     public void run() {
         while (socket.isConnected()) {
             Thread.yield();
-            final String data = readLine();
-            writeLine(data);
+            try {
+                final String data = readLine();
+                writeLine(data);
+            } catch (Exception e) {
+                log.error("", e);
+            }
         }
     }
 }

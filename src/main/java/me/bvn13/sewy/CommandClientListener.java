@@ -18,6 +18,7 @@ package me.bvn13.sewy;
 import me.bvn13.sewy.command.AbstractCommand;
 import org.apache.commons.lang3.SerializationUtils;
 
+import java.io.IOException;
 import java.io.Serializable;
 import java.net.Socket;
 
@@ -39,34 +40,38 @@ public class CommandClientListener extends AbstractClientListener implements Abs
     public void run() {
         for (Thread.yield(); !socket.isConnected() && !socket.isClosed(); Thread.yield()) {
         }
-        while (socket.isConnected()) {
-            Thread.yield();
-            byte[] line = readBytes(getSeparator());
-            if (line == null || line.length == 0) {
-                continue;
-            }
-            final Object command;
+        while (socket.isConnected() && !socket.isClosed()) {
             try {
-                command = SerializationUtils.deserialize(line);
-            } catch (Throwable e) {
-                log.warn("Deserialization exception occurred!", e);
-                continue;
+                Thread.yield();
+                byte[] line = readBytes(getSeparator());
+                if (line == null || line.length == 0) {
+                    continue;
+                }
+                final Object command;
+                try {
+                    command = SerializationUtils.deserialize(line);
+                } catch (Throwable e) {
+                    log.warn("Deserialization exception occurred!", e);
+                    continue;
+                }
+                if (command == null) {
+                    continue;
+                }
+                if (!Sewy.getRegisteredDataTypes().contains(command.getClass())) {
+                    log.error("Unexpected command received");
+                    continue;
+                }
+                log.debug("Command received: " + command.getClass());
+                if (!(command instanceof AbstractCommand)) {
+                    log.warn("Incorrect command received: " + command);
+                    continue;
+                }
+                final Serializable response = onCommand((AbstractCommand) command);
+                log.debug(format("Response for %s is: %s", command, response));
+                writeBytes(SerializationUtils.serialize(response), getSeparator());
+            } catch (Exception e) {
+                log.error("Failed to communicate!", e);
             }
-            if (command == null) {
-                continue;
-            }
-            if (!Sewy.getRegisteredDataTypes().contains(command.getClass())) {
-                log.error("Unexpected command received");
-                continue;
-            }
-            log.debug("Command received: " + command.getClass());
-            if (!(command instanceof AbstractCommand)) {
-                log.warn("Incorrect command received: " + command);
-                continue;
-            }
-            final Serializable response = onCommand((AbstractCommand) command);
-            log.debug(format("Response for %s is: %s", command, response));
-            writeBytes(SerializationUtils.serialize(response), getSeparator());
         }
     }
 
@@ -85,11 +90,12 @@ public class CommandClientListener extends AbstractClientListener implements Abs
 
     /**
      * Sends command to opposite side
+     *
      * @param command command to be sent
-     * @param <T> generic type
+     * @param <T>     generic type
      */
-    public <T extends AbstractCommand> void send(T command) {
-        log.debug("Start to send command: " + command);
+    public <T extends AbstractCommand> void send(T command) throws IOException {
+        log.debug("Start to send command: {}", command);
         writeBytes(SerializationUtils.serialize(command), getSeparator());
     }
 

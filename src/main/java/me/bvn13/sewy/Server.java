@@ -46,12 +46,14 @@ public class Server<T extends AbstractClientListener> {
 
     protected ServerSocket socket;
 
+    private int maxClientsCount;
+
     protected Server() {
     }
 
     /**
-     * @param host host to bind in order to start listen to clients
-     * @param port port to start listen to
+     * @param host                host to bind in order to start listen to clients
+     * @param port                port to start listen to
      * @param clientListenerClass client listen class to be used for communication
      */
     public Server(String host, int port, Class clientListenerClass) {
@@ -59,9 +61,8 @@ public class Server<T extends AbstractClientListener> {
     }
 
     /**
-     *
-     * @param host host to bind in order to start listen to clients
-     * @param port port to start listen to
+     * @param host                      host to bind in order to start listen to clients
+     * @param port                      port to start listen to
      * @param clientListenerConstructor to provide constructor for client listener (see {@link me.bvn13.sewy.Server#Server(java.lang.String, int, java.lang.Class)})
      */
     @SuppressWarnings("unchecked")
@@ -73,17 +74,19 @@ public class Server<T extends AbstractClientListener> {
                 socket = server;
 
                 while (!server.isClosed()) {
-                    final Socket client = server.accept();
-                    final T clientListener = clientListenerConstructor.apply(client);
-                    executor.execute(clientListener);
-                    clients.add(clientListener);
+                    if (!isMaximumClientsAchieved()) {
+                        final Socket client = server.accept();
+                        final T clientListener = clientListenerConstructor.apply(client);
+                        executor.execute(clientListener);
+                        clients.add(clientListener);
+                    }
+                    Thread.yield();
                 }
 
             } catch (IOException e) {
                 log.error(format("Error while conversation with %s:%d", host, port), e);
             }
         });
-
     }
 
     /**
@@ -110,10 +113,33 @@ public class Server<T extends AbstractClientListener> {
 
     /**
      * To check whether the server is ready for new connections
+     *
      * @return
      */
     public boolean isListening() {
         return socket != null && socket.isBound();
     }
 
+    /**
+     * Returns count of connected clients
+     *
+     * @return count of connected clients
+     */
+    public int getClientsCount() {
+        return clients.size();
+    }
+
+    /**
+     * Sets maximum clients to be connected to server
+     *
+     * @param count maximum clients count
+     */
+    public void setMaxClientsCount(int count) {
+        maxClientsCount = count;
+    }
+
+    protected boolean isMaximumClientsAchieved() {
+        return maxClientsCount == 0
+                || clients.size() >= maxClientsCount;
+    }
 }

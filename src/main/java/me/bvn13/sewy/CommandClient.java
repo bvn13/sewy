@@ -19,10 +19,10 @@ import me.bvn13.sewy.command.AbstractCommand;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.net.Socket;
 import java.util.function.Function;
 
-import static java.lang.String.format;
 import static me.bvn13.sewy.ClientListenerFactory.createClientListenerConstructor;
 
 /**
@@ -41,6 +41,7 @@ public class CommandClient extends Client<CommandClientListener> {
 
     /**
      * Starts to connect to server immediately
+     *
      * @param host host to connect to
      * @param port port to be used while connecting
      */
@@ -50,8 +51,9 @@ public class CommandClient extends Client<CommandClientListener> {
 
     /**
      * Starts to connect to server immediately
-     * @param host host to connect to
-     * @param port port to be used while connecting
+     *
+     * @param host                host to connect to
+     * @param port                port to be used while connecting
      * @param clientListenerClass client listener class describing protocol of communications
      */
     public CommandClient(String host, int port, Class clientListenerClass) {
@@ -60,8 +62,9 @@ public class CommandClient extends Client<CommandClientListener> {
 
     /**
      * Connects to server immediately
-     * @param host host to connect to
-     * @param port port to be used while connecting
+     *
+     * @param host                      host to connect to
+     * @param port                      port to be used while connecting
      * @param clientListenerConstructor to provide constructor for client listener (see {@link me.bvn13.sewy.Client#Client(java.lang.String, int, java.lang.Class)})
      */
     public CommandClient(String host, int port, Function<Socket, CommandClientListener> clientListenerConstructor) {
@@ -71,10 +74,12 @@ public class CommandClient extends Client<CommandClientListener> {
 
     /**
      * Sends command to server
+     *
      * @param command command to be sent
-     * @param <T> generic type
+     * @param <T>     generic type
+     * @throws IOException if any error occurred while sending
      */
-    public <T extends AbstractCommand> void send(T command) {
+    public <T extends AbstractCommand> void send(T command) throws IOException {
         log.debug("Start to send command: " + command);
         client.send(command);
     }
